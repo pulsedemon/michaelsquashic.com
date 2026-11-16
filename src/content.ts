@@ -82,7 +82,7 @@ export const projects: Project[] = [
       {
         heading: "Where it stands",
         paragraphs: [
-          "Open source under the MIT license since November 2026, published as is with no promise of support. Version 0.1.0, built for my own work on macOS. It has 230 test files, and every pull request and every push to main runs type checks, lint, tests and a build on Linux.",
+          "Open source under the MIT license since November 2026, published as is with no promise of support. Version 0.1.0, built for my own work on macOS, and as far as I know I am its only user. It has automated many tasks I used to run by hand, and it lets me work with Claude Code and Codex at the same time. The repository has 230 test files, and every pull request and every push to main runs type checks, lint, tests and a build on Linux.",
         ],
       },
     ],
@@ -132,6 +132,7 @@ export const projects: Project[] = [
         heading: "The problem",
         paragraphs: [
           "I wanted one place to publish the small animation experiments I build in my spare time. Each one had to run on its own, and the site had to load quickly in any modern browser.",
+          "It started in September 2012 as a single page with one jQuery animation and has been rebuilt in place since. The animations moved into iframes in 2021, the code moved to TypeScript in 2023, and the build moved from webpack to Vite in 2025.",
         ],
       },
       {
@@ -152,7 +153,7 @@ export const projects: Project[] = [
       {
         heading: "Where it stands",
         paragraphs: [
-          "Live and deployed through AWS Amplify. Every pull request to master runs lint, a format check, type checks, tests and a build.",
+          "Live and deployed through AWS Amplify. Google Analytics counted 1,434 visitors and about 2,700 page views in October 2026. Every pull request to master runs lint, a format check, type checks, tests and a build.",
         ],
       },
     ],
@@ -194,7 +195,7 @@ export const projects: Project[] = [
       {
         heading: "The problem",
         paragraphs: [
-          "Summon a demon turns live microphone input into a 3D scene you play with your voice. Louder sound makes bigger waves, brighter sound makes tighter rings, and holding a pitched sound for two seconds starts a summoning.",
+          "Summon a demon turns live microphone input into a 3D scene you play with your voice. Louder sound makes bigger waves, brighter sound makes tighter rings, and holding a pitched sound for two seconds starts a summoning. I made it for fun.",
         ],
       },
       {
@@ -215,7 +216,9 @@ export const projects: Project[] = [
       },
       {
         heading: "Where it stands",
-        paragraphs: ["Live at summonademon.net, hosted on AWS Amplify."],
+        paragraphs: [
+          "Live at summonademon.net, hosted on AWS Amplify. Everyone I have shown it to found it hilarious.",
+        ],
       },
     ],
   },

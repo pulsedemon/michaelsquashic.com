@@ -30,18 +30,20 @@ const CLEAR = 0.3;
 const SUN = new Vector3(-10, 20, 14).normalize();
 
 type Size = { width: number; height: number };
+
 /** the bottom bar's top, in CSS px from the canvas's top, and the height kept clear above the records. */
 type Hud = { barTop: number; topInset: number };
+
 /** the grid's computed track sizes, in CSS px. */
 type Tracks = { column: number; row: number };
 
 /** a record's pose: its pivot at the face's bottom edge, its lean about x and its face size. */
 type RecordState = { x: number; y: number; z: number; rot: number; w: number; h: number };
+
 type CameraState = { position: Vector3; quaternion: Quaternion };
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 const smoothstep = (x: number) => x * x * (3 - 2 * x);
-
 /** how quickly the records catch up with the scroll: the easing's time constant, in seconds. */
 const EASE = 0.08;
 
@@ -72,7 +74,9 @@ export function crateLayout(canvas: Size, tracks: Tracks, hud: Hud, n: number): 
 
   for (let i = 0; i < n; i++)
     for (let j = 0; j <= 10 * base.last; j++) casterPoints.push(...recordCorners(recordPose(i, j / 10, base)));
+
   for (const b of base.boxes) casterPoints.push(...boxCorners(b));
+
   const ground = groundFor(casterPoints, base.groundY);
   const sun = sunFor(casterPoints, ground, crateOrigin);
 
@@ -89,10 +93,12 @@ function roomFor(l: LayoutBase, stops: CameraState[]) {
       ...Array.from({ length: l.n }, (_, i) => recordCorners(recordPose(i, p, l))).flat(),
       ...l.boxes.flatMap(boxCorners),
     ];
+
     const shadows = points.filter((pt) => pt.y >= l.groundY).map((pt) => shadowOf(pt, l.groundY));
 
     return project([...points, ...shadows], stops[p], l.canvas.width / l.canvas.height).map((q) => q.y);
   };
+
   const px = (ndc: number) => Math.max(0, Math.ceil((ndc / 2) * l.canvas.height));
 
   return { above: px(Math.max(...reach(0)) - 1), below: px(-1 - Math.min(...reach(l.last))) };
@@ -118,6 +124,7 @@ function crateBase(canvas: Size, tracks: Tracks, hud: Hud, n: number) {
   const x0 = innerW / 2;
   const zMid = (frontOuter + backZ - WALL_T) / 2;
   const zLen = frontOuter - (backZ - WALL_T);
+
   // the floor's top is at y = 0.
   const boxes: Box[] = [
     { center: [0, -WALL_T / 2, zMid], size: [innerW + 2 * WALL_T, WALL_T, zLen] },
@@ -126,6 +133,7 @@ function crateBase(canvas: Size, tracks: Tracks, hud: Hud, n: number) {
     { center: [-x0 - WALL_T / 2, h / 2, (FRONT_Z + backZ) / 2], size: [WALL_T, h, FRONT_Z - backZ] },
     { center: [x0 + WALL_T / 2, h / 2, (FRONT_Z + backZ) / 2], size: [WALL_T, h, FRONT_Z - backZ] },
   ];
+
   const groundY = -WALL_T;
   const crateOrigin = new Vector3(0, groundY, zMid);
 
@@ -133,6 +141,7 @@ function crateBase(canvas: Size, tracks: Tracks, hud: Hud, n: number) {
 }
 
 type LayoutBase = Omit<ReturnType<typeof crateBase>, "crateOrigin">;
+
 export type Layout = LayoutBase & {
   stops: CameraState[];
   ground: ReturnType<typeof groundFor>;
@@ -171,6 +180,7 @@ function groundFor(points: Vector3[], y: number) {
   let x1 = -Infinity;
   let z0 = Infinity;
   let z1 = -Infinity;
+
   const take = (x: number, z: number) => {
     x0 = Math.min(x0, x);
     x1 = Math.max(x1, x);
@@ -180,10 +190,11 @@ function groundFor(points: Vector3[], y: number) {
 
   for (const p of points) {
     if (p.y < y) continue;
-    const s = shadowOf(p, y);
 
+    const s = shadowOf(p, y);
     take(s.x, s.z);
   }
+
   // sampling p in tenths, and corners near the ground's level, leave footprints a little past the sampled ones.
   const pad = 1.5;
 
@@ -199,15 +210,18 @@ function sunFor(points: Vector3[], ground: ReturnType<typeof groundFor>, target:
   // beyond every caster along the light, so none sits behind the shadow camera.
   const reach = Math.max(...points.map((p) => p.clone().sub(target).dot(SUN)));
   const position = target.clone().addScaledVector(SUN, Math.max(60, reach + 5));
+
   const view = new Matrix4()
     .lookAt(position, target, new Vector3(0, 1, 0))
     .setPosition(position)
     .invert();
+
   const all = [...points];
 
   for (const dx of [-0.5, 0.5])
     for (const dz of [-0.5, 0.5])
       all.push(new Vector3(ground.center[0] + dx * ground.size[0], ground.y, ground.center[2] + dz * ground.size[1]));
+
   let l = Infinity;
   let r = -Infinity;
   let b = Infinity;
@@ -217,7 +231,6 @@ function sunFor(points: Vector3[], ground: ReturnType<typeof groundFor>, target:
 
   for (const p of all) {
     const v = p.clone().applyMatrix4(view);
-
     l = Math.min(l, v.x);
     r = Math.max(r, v.x);
     b = Math.min(b, v.y);
@@ -225,6 +238,7 @@ function sunFor(points: Vector3[], ground: ReturnType<typeof groundFor>, target:
     near = Math.min(near, -v.z);
     far = Math.max(far, -v.z);
   }
+
   const pad = 0.25;
 
   return {
@@ -271,7 +285,6 @@ export function project(points: Vector3[], camera: CameraState, aspect: number) 
   return points.map((p) => {
     const v = p.clone().applyMatrix4(projector.matrixWorldInverse);
     const behind = v.z >= -0.1;
-
     v.applyMatrix4(projector.projectionMatrix);
 
     return { x: v.x, y: v.y, behind };
@@ -287,8 +300,10 @@ function fitStop(l: LayoutBase, i: number): CameraState {
   const pose = recordPose(i, i, l);
   const low = lowLine(pose);
   const heading = new Vector3(VIEW.x, 0, VIEW.z).normalize();
+
   const along = (elevation: number) =>
     fitAlong(l, pose, heading.clone().multiplyScalar(Math.cos(elevation)).setY(Math.sin(elevation)));
+
   const need = Math.atan(clearSlope(l)) + (2 * Math.PI) / 180;
   let elevation = Math.atan2(VIEW.y * l.H, Math.hypot(VIEW.x, VIEW.z) * l.W);
   let stop = along(elevation);
@@ -297,6 +312,7 @@ function fitStop(l: LayoutBase, i: number): CameraState {
     const sight = Math.atan2(stop.position.y - low.y, stop.position.z - low.z);
 
     if (sight >= need - 1e-9) break;
+
     elevation += need - sight;
     stop = along(elevation);
   }
@@ -312,15 +328,18 @@ function fitAlong(l: LayoutBase, pose: RecordState, dir: Vector3): CameraState {
   const up = new Vector3(0, Math.cos(pose.rot), Math.sin(pose.rot));
   const right = new Vector3(1, 0, 0);
   const target = new Vector3(pose.x, pose.y, pose.z).addScaledVector(up, pose.h / 2);
+
   const at = (d: number) => {
     const position = target.clone().addScaledVector(dir, d);
 
     return { position, quaternion: lookFrom(position, target) };
   };
+
   const fits = (d: number) =>
     project(corners, at(d), aspect).every(
       (c) => !c.behind && c.x >= box.left && c.x <= box.right && c.y <= box.top && c.y >= box.bottom,
     );
+
   let d = 1;
 
   for (let pass = 0; pass < 10; pass++) {
@@ -333,6 +352,7 @@ function fitAlong(l: LayoutBase, pose: RecordState, dir: Vector3): CameraState {
       if (fits(mid)) hi = mid;
       else lo = mid;
     }
+
     d = hi;
     const pts = project(corners, at(d), aspect);
     const cx = (Math.min(...pts.map((p) => p.x)) + Math.max(...pts.map((p) => p.x))) / 2;
@@ -341,6 +361,7 @@ function fitAlong(l: LayoutBase, pose: RecordState, dir: Vector3): CameraState {
     const oy = (box.top + box.bottom) / 2 - cy;
 
     if (Math.abs(ox) < 1e-5 && Math.abs(oy) < 1e-5) break;
+
     // moving the target left moves the record right on screen.
     target.addScaledVector(right, -ox * d * TAN_HALF_FOV * aspect);
     target.addScaledVector(up, -oy * d * TAN_HALF_FOV);
@@ -357,10 +378,12 @@ function lowLine(r: RecordState) {
 /** the y-z slope from a record's low line to the top of the record leaning forward in front of it; every stop is alike. */
 function clearSlope(l: LayoutBase) {
   const front = recordPose(0, 1, l);
+
   const top = new Vector3(front.x, front.y, front.z).addScaledVector(
     new Vector3(0, Math.cos(front.rot), Math.sin(front.rot)),
     front.h,
   );
+
   const low = lowLine(recordPose(1, 1, l));
 
   return (top.y - low.y) / (top.z - low.z);

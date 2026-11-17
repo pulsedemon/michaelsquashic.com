@@ -18,24 +18,25 @@ const measured = [
   },
   { canvas: { width: 500, height: 727 }, tracks: { column: 440, row: 387.672 }, hud: { barTop: 601, topInset: 73 } },
 ];
+
 // synthetic: records this shallow make the camera rise to see past the record leaning forward in front.
 const shallow = {
   canvas: { width: 1440, height: 900 },
   tracks: { column: 640, row: 300 },
   hud: { barTop: 820, topInset: 70 },
 };
+
 const fixtures = [...measured, shallow];
 
 type Fixture = (typeof fixtures)[number];
-const n = projects.length;
 
+const n = projects.length;
 const name = (f: Fixture) => `${f.canvas.width}x${f.canvas.height}, ${f.tracks.column}x${f.tracks.row} tracks`;
 const layoutFor = (f: Fixture) => crateLayout(f.canvas, f.tracks, f.hud, n);
 
 /** screen pixels, y down, through a camera built from the stop. */
 function toScreen(points: Vector3[], stop: Layout["stops"][number], { width, height }: Fixture["canvas"]) {
   const camera = new PerspectiveCamera(FOV, width / height, 0.1, 1000);
-
   camera.position.copy(stop.position);
   camera.quaternion.copy(stop.quaternion);
   camera.updateMatrixWorld();
@@ -51,6 +52,7 @@ for (const f of fixtures) {
   test(`every stop frames its record between the top inset and the bar at ${name(f)}`, () => {
     const layout = layoutFor(f);
     const { width, height } = f.canvas;
+
     const box = {
       left: 0.08 * width,
       right: 0.92 * width,
@@ -68,14 +70,15 @@ for (const f of fixtures) {
         left >= box.left - 0.5 && right <= box.right + 0.5,
         `record ${i} spans x ${left}..${right}, box ${box.left}..${box.right}`,
       );
+
       assert.ok(
         top >= box.top - 0.5 && bottom <= box.bottom + 0.5,
         `record ${i} spans y ${top}..${bottom}, box ${box.top}..${box.bottom}`,
       );
+
       // as close as the box allows: the record fills it on one axis.
       const fillsWidth = left - box.left < 1 && box.right - right < 1;
       const fillsHeight = top - box.top < 1 && box.bottom - bottom < 1;
-
       assert.ok(fillsWidth || fillsHeight, `record ${i} fills neither axis of the box`);
     }
   });
@@ -95,7 +98,6 @@ for (const f of fixtures) {
       for (const t of tops) {
         // with y down and a running left to right, a positive cross product puts t below the line.
         const cross = (b.x - a.x) * (t.y - a.y) - (b.y - a.y) * (t.x - a.x);
-
         assert.ok(cross > 0, `record ${i - 1}'s top covers record ${i}'s lowest line`);
       }
     }
@@ -104,20 +106,24 @@ for (const f of fixtures) {
   test(`the room above and below the stage holds the scene as it scrolls in and out at ${name(f)}`, () => {
     const layout = layoutFor(f);
     const sun = layout.sun.position.clone().sub(layout.sun.target).normalize();
+
     const boxCorners = layout.boxes.flatMap(({ center: [x, y, z], size: [w, h, d] }) =>
       [-0.5, 0.5].flatMap((dx) =>
         [-0.5, 0.5].flatMap((dy) => [-0.5, 0.5].map((dz) => new Vector3(x + dx * w, y + dy * h, z + dz * d))),
       ),
     );
+
     const scene = (p: number) => {
       const points = [
         ...Array.from({ length: n }, (_, i) => recordCorners(recordPose(i, p, layout))).flat(),
         ...boxCorners,
       ];
+
       const shadows = points.map((pt) => pt.clone().addScaledVector(sun, -(pt.y - layout.groundY) / sun.y));
 
       return [...points, ...shadows];
     };
+
     const highest = Math.min(...toScreen(scene(0), layout.stops[0], f.canvas).map((c) => c.y));
     const lowest = Math.max(...toScreen(scene(n - 1), layout.stops[n - 1], f.canvas).map((c) => c.y));
 
@@ -125,6 +131,7 @@ for (const f of fixtures) {
       highest >= -layout.room.above - 0.5,
       `the scene reaches ${-highest}px above the stage, room ${layout.room.above}px`,
     );
+
     assert.ok(
       lowest <= f.canvas.height + layout.room.below + 0.5,
       `the scene reaches ${lowest - f.canvas.height}px below the stage, room ${layout.room.below}px`,
@@ -135,20 +142,18 @@ for (const f of fixtures) {
 test("the camera blends between stops, clamped to the first and last", () => {
   const turn = (degrees: number) =>
     new Quaternion(0, Math.sin((degrees * Math.PI) / 360), 0, Math.cos((degrees * Math.PI) / 360));
+
   const stops = [
     { position: new Vector3(0, 0, 0), quaternion: turn(0) },
     { position: new Vector3(4, 8, -12), quaternion: turn(120) },
   ];
+
   const l = { stops, last: 1 };
-
   const quarter = stopPose(0.25, l);
-
   assert.deepEqual(quarter.position.toArray(), [1, 2, -3]);
   // a normalised lerp gives about 27.8° here, and swapped stops 90°.
   const off = (quarter.quaternion.angleTo(turn(30)) * 180) / Math.PI;
-
   assert.ok(off < 0.5, `the camera is ${off}° off its 30° turn`);
-
   assert.deepEqual(stopPose(-1, l).position.toArray(), [0, 0, 0]);
   assert.ok(stopPose(-1, l).quaternion.angleTo(turn(0)) < 1e-9);
   assert.deepEqual(stopPose(2, l).position.toArray(), [4, 8, -12]);
@@ -179,5 +184,6 @@ test("the records land exactly on the scroll's position, 34 frames after a one-r
     p = easeScrub(p, 3, 1 / 60);
     frames++;
   }
+
   assert.equal(frames, 34);
 });

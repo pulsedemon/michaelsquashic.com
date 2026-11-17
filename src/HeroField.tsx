@@ -26,7 +26,6 @@ export function HeroField() {
 
     function layout() {
       const dpr = devicePixelRatio;
-
       c.width = Math.round(c.clientWidth * dpr);
       c.height = Math.round(c.clientHeight * dpr);
       ctx.scale(dpr, dpr);
@@ -34,16 +33,14 @@ export function HeroField() {
       const spacing = c.clientWidth / columns;
       const rows = Math.floor(c.clientHeight / spacing);
       const top = (c.clientHeight - rows * spacing) / 2;
-
       length = spacing * 0.55;
       thickness = spacing * 0.12;
       const now = performance.now();
-
       bars = [];
+
       for (let row = 0; row < rows; row++) {
         for (let column = 0; column < columns; column++) {
           const bar = { x: (column + 0.5) * spacing, y: top + (row + 0.5) * spacing, column, row, angle: 0 };
-
           bar.angle = ripple(bar, now);
           bars.push(bar);
         }
@@ -52,6 +49,7 @@ export function HeroField() {
 
     function draw() {
       ctx.clearRect(0, 0, c.clientWidth, c.clientHeight);
+
       for (const bar of bars) {
         ctx.save();
         ctx.translate(bar.x, bar.y);
@@ -63,7 +61,6 @@ export function HeroField() {
 
     function tick(now: number) {
       const ease = last ? 1 - Math.exp(-(now - last) / 80) : 1;
-
       last = now;
       const rect = c.getBoundingClientRect();
       const target = pointer && now - pointer.at < idleMs ? pointer : null;
@@ -72,9 +69,9 @@ export function HeroField() {
         const aim = target ? Math.atan2(target.y - rect.top - bar.y, target.x - rect.left - bar.x) : ripple(bar, now);
         // a bar looks the same turned half a turn, so it never swings further than a quarter turn.
         const turn = aim - bar.angle;
-
         bar.angle += (turn - Math.PI * Math.round(turn / Math.PI)) * ease;
       }
+
       draw();
       frame = requestAnimationFrame(tick);
     }
@@ -85,18 +82,22 @@ export function HeroField() {
     });
 
     resize.observe(c);
+
     if (reducedMotion) return () => resize.disconnect();
 
     const onMove = (e: PointerEvent) => {
       pointer = { x: e.clientX, y: e.clientY, at: performance.now() };
     };
+
     const onOut = (e: PointerEvent) => {
       if (!e.relatedTarget) pointer = null;
     };
+
     // off screen, and while the narrow layout hides it, the field doesn't animate.
     const visible = new IntersectionObserver(([entry]) => {
       cancelAnimationFrame(frame);
       last = 0;
+
       if (entry.isIntersecting) frame = requestAnimationFrame(tick);
     });
 

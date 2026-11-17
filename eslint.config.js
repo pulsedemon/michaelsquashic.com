@@ -5,17 +5,6 @@ import reactHooks from "eslint-plugin-react-hooks";
 import { defineConfig, globalIgnores } from "eslint/config";
 import tseslint from "typescript-eslint";
 
-const singleLineStatement = {
-  selector:
-    ':matches(VariableDeclaration, ExportNamedDeclaration[declaration.type="VariableDeclaration"], ExpressionStatement)',
-  lineMode: "singleline",
-};
-
-const singleLineValidationGuard = {
-  selector: 'IfStatement[alternate=null][consequent.type="ThrowStatement"]',
-  lineMode: "singleline",
-};
-
 const pascalCaseTsx = {
   meta: {
     type: "suggestion",
@@ -53,10 +42,9 @@ export default defineConfig(
       "no-fallthrough": ["error", { allowEmptyCase: true }],
       "@stylistic/padding-line-between-statements": [
         "error",
-        { blankLine: "always", prev: "*", next: "*" },
-        { blankLine: "any", prev: "import", next: "import" },
-        { blankLine: "never", prev: singleLineStatement, next: singleLineStatement },
-        { blankLine: "any", prev: singleLineValidationGuard, next: singleLineValidationGuard },
+        { blankLine: "always", prev: "*", next: "return" },
+        { blankLine: "always", prev: ["const", "let"], next: "*" },
+        { blankLine: "any", prev: ["const", "let"], next: ["const", "let", "export"] },
       ],
       "@typescript-eslint/consistent-type-definitions": ["error", "type"],
       "@typescript-eslint/consistent-type-imports": "error",
@@ -77,9 +65,14 @@ export default defineConfig(
   },
   {
     files: ["**/*.tsx"],
+    // the entry file renders the page and is not a component.
+    ignores: ["src/main.tsx"],
     plugins: { local: { rules: { "pascal-case-tsx": pascalCaseTsx } } },
+    rules: { "local/pascal-case-tsx": "error" },
+  },
+  {
+    files: ["**/*.tsx"],
     rules: {
-      "local/pascal-case-tsx": "error",
       "no-restricted-syntax": [
         "error",
         ...[

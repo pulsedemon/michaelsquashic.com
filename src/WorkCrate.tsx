@@ -56,17 +56,17 @@ export function WorkCrate({ grid }: { grid: RefObject<HTMLDivElement | null> }) 
   function sample(): Sample {
     const { top, step } = measureTrack();
     const raw = scrollY - top;
+
     dockTitle(-raw);
     const p = Math.min(last, Math.max(0, raw / step));
 
     if (scene) {
       // the canvas scrolls with the page, so only a new scrub position needs a frame.
       if (p !== scrub.current) must(loaded)[2].invalidate();
-
       const s = must(stage.current).getBoundingClientRect();
+
       setActive(s.top < innerHeight + scene.layout.room.above && s.bottom > -scene.layout.room.below);
     }
-
     scrub.current = p;
     const k = Math.round(p);
     const focused = document.activeElement;
@@ -88,7 +88,6 @@ export function WorkCrate({ grid }: { grid: RefObject<HTMLDivElement | null> }) 
     const pending = pendingStep.current;
 
     if (pending && k !== pending.from && k !== pending.to) pendingStep.current = null;
-
     if (pendingStep.current?.to === k) {
       pendingStep.current = null;
       setAnnounced(k);
@@ -110,13 +109,12 @@ export function WorkCrate({ grid }: { grid: RefObject<HTMLDivElement | null> }) 
     // within a pixel of pinned counts: scrolling to the track's fractional top can stop a fraction short.
     const docked = trackTop < 1;
     const progress = Math.min(1, Math.max(0, 1 - trackTop / range));
-    heading.style.setProperty("--dock", String(reducedMotion ? Number(docked) : progress));
 
+    heading.style.setProperty("--dock", String(reducedMotion ? Number(docked) : progress));
     section.style.setProperty(
       "--dock-scale",
       String(must(previous.current).getBoundingClientRect().height / parseFloat(style.height)),
     );
-
     section.toggleAttribute("data-docked", docked);
   }
 
@@ -126,13 +124,11 @@ export function WorkCrate({ grid }: { grid: RefObject<HTMLDivElement | null> }) 
     const i = Math.round(scrub.current) + direction;
 
     if (i < 0 || i > last) return;
-
     pendingStep.current = { from: i - direction, to: i };
-
     // the button that reaches an end hides, so focus moves to the one that stays.
     if (i === 0 || i === last) must((direction === 1 ? previous : next).current).focus({ preventScroll: true });
-
     const { top, step } = measureTrack();
+
     scrollTo({ top: top + i * step, behavior: reducedMotion ? "auto" : "smooth" });
   }
 
@@ -158,12 +154,10 @@ export function WorkCrate({ grid }: { grid: RefObject<HTMLDivElement | null> }) 
         if (Math.abs(card.offsetHeight - row) > 1)
           console.error(`Grid row ${row}px doesn't match its card's ${card.offsetHeight}px`);
       }
-
       const s = must(stage.current);
       const origin = s.getBoundingClientRect();
       const b = must(bar.current).getBoundingClientRect();
       const padding = getComputedStyle(must(bar.current));
-
       // as much room above the records as a one-row bar takes below them, which also holds the docked Work title.
       const topInset =
         parseFloat(padding.paddingTop) +
@@ -177,32 +171,29 @@ export function WorkCrate({ grid }: { grid: RefObject<HTMLDivElement | null> }) 
         projects.length,
       );
     }
-
     const capture = () => {
       const [, { crateLayout }, , { captureCards }] = modules;
+
       setScene({ snapshot: captureCards(must(grid.current)), layout: measureLayout(crateLayout) });
     };
-
     const resample = () => void (latest = onSample());
     // resize runs before the frame's scroll events, which may already come from the new layout.
     const onResize = () => (beforeResize = latest);
-
     const resized = new ResizeObserver(() => {
       const s = must(stage.current);
 
       if (s.clientWidth === size.width && s.clientHeight === size.height) return;
-
       size = { width: s.clientWidth, height: s.clientHeight };
       capture();
       // a stage resize without a window resize, from a scrollbar coming or going, has no earlier sample to restore.
       const before = beforeResize ?? latest;
-      beforeResize = null;
 
+      beforeResize = null;
       if (before.pinned) {
         const { top, step } = measureTrack();
+
         scrollTo({ top: top + before.p * step, behavior: "auto" });
       }
-
       // a scroll of under a pixel fires no scroll event.
       resample();
     });
@@ -211,13 +202,11 @@ export function WorkCrate({ grid }: { grid: RefObject<HTMLDivElement | null> }) 
     addEventListener("scroll", resample, { passive: true });
     addEventListener("pageshow", resample);
     addEventListener("resize", onResize);
-
     const load = async () => {
       try {
         await Promise.all([
           loadScene().then((m) => {
             modules = m;
-
             // mounts the canvas now, so its context is created while the pictures load.
             if (!cancelled) setLoaded(m);
           }),
@@ -231,10 +220,9 @@ export function WorkCrate({ grid }: { grid: RefObject<HTMLDivElement | null> }) 
 
         return;
       }
-
       if (cancelled) return;
-
       const s = must(stage.current);
+
       size = { width: s.clientWidth, height: s.clientHeight };
       capture();
       resized.observe(s);
@@ -263,6 +251,7 @@ export function WorkCrate({ grid }: { grid: RefObject<HTMLDivElement | null> }) 
 
     for (const control of must(bar.current).querySelectorAll<HTMLElement>("a, button")) {
       const c = control.getBoundingClientRect();
+
       control.style.scrollMarginTop = `${c.top - s.top}px`;
       control.style.scrollMarginBottom = `${s.bottom - c.bottom}px`;
     }

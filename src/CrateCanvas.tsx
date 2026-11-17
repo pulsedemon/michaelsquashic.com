@@ -37,18 +37,18 @@ const canvasDpr = () => Math.min(Math.max(devicePixelRatio, DPR[0]), DPR[1]);
 /** draws a card at `scale` texels per CSS pixel on the page's own grey. */
 function cardTexture(shot: CardShot, scale: number, mipmaps: boolean) {
   const canvas = document.createElement("canvas");
+
   canvas.width = Math.ceil(shot.rect.width * scale);
   canvas.height = Math.ceil(shot.rect.height * scale);
   const g = must(canvas.getContext("2d"));
+
   g.scale(scale, scale);
   g.fillStyle = shot.background;
   g.fillRect(0, 0, shot.rect.width, shot.rect.height);
-
   for (const f of shot.fills) {
     g.fillStyle = f.color;
     g.fillRect(f.x, f.y, f.width, f.height);
   }
-
   for (const p of shot.pictures) {
     if ("svg" in p) {
       // filled as paths: WebKit shrinks an SVG image that `drawImage` crops.
@@ -57,44 +57,36 @@ function cardTexture(shot: CardShot, scale: number, mipmaps: boolean) {
       for (const polygon of p.svg.querySelectorAll("polygon")) {
         g.fillStyle = getComputedStyle(polygon).fill;
         g.beginPath();
-
         for (const { x, y } of polygon.points)
           g.lineTo(p.x + (x * p.width) / box.width, p.y + (y * p.height) / box.height);
-
         g.fill();
       }
-
       continue;
     }
-
     // `drawImage` crops in the file's pixels; with `srcset` the natural size is scaled to `sizes` and rounded.
     const file = p.img.srcset
       ? screenshotSize(new URL(p.img.currentSrc).pathname)
       : { width: p.img.naturalWidth, height: p.img.naturalHeight };
-
     const fit = Math.max(p.width / file.width, p.height / file.height);
     const sw = p.width / fit;
     const sh = p.height / fit;
+
     g.drawImage(p.img, (file.width - sw) / 2, (file.height - sh) / 2, sw, sh, p.x, p.y, p.width, p.height);
   }
-
   g.textBaseline = "alphabetic";
-
   for (const { ch, x, baseline, font, color } of shot.glyphs) {
     g.font = font;
     g.fillStyle = color;
     g.fillText(ch, x, baseline);
   }
-
   for (const u of shot.underlines) {
     g.fillStyle = u.color;
     g.fillRect(u.x, u.y, u.width, u.thickness);
   }
-
   const texture = new CanvasTexture(canvas);
+
   texture.colorSpace = SRGBColorSpace;
   texture.anisotropy = 8;
-
   if (!mipmaps) {
     texture.generateMipmaps = false;
     texture.minFilter = LinearFilter;
@@ -163,12 +155,13 @@ function CrateScene(props: CrateSceneProps) {
   useLayoutEffect(() => {
     latest.current = props;
   });
-
   const n = snapshot.length;
+
   const groups = useRef<(Group | null)[]>([]);
   const faces = useRef<(Mesh | null)[]>([]);
   const sunTarget = useMemo(() => new Object3D(), []);
   const textures = useRef<(Texture | null)[]>([]);
+
   /** the scrub position the records are drawn at, which trails the scroll's. */
   const eased = useRef<number | null>(null);
 
@@ -190,7 +183,6 @@ function CrateScene(props: CrateSceneProps) {
 
     return Math.min(2048, widthCss * canvasDpr());
   }
-
   function buildTexture(i: number) {
     const shot = snapshot[i];
     const width = textureWidth(i);
@@ -201,7 +193,6 @@ function CrateScene(props: CrateSceneProps) {
       width <= Math.ceil(shot.rect.width * canvasDpr())
         ? cardTexture(shot, canvasDpr(), false)
         : cardTexture(shot, width / shot.rect.width, true);
-
     gl.initTexture(textures.current[i]);
     old?.dispose();
   }
@@ -210,6 +201,7 @@ function CrateScene(props: CrateSceneProps) {
   useLayoutEffect(() => {
     // current record first; each old texture keeps drawing until its replacement is ready.
     const first = Math.round(scrub.current);
+
     textureQueue.current = snapshot.map((_, i) => i).sort((a, b) => Math.abs(a - first) - Math.abs(b - first));
     invalidate();
   }, [snapshot, layout, scrub, invalidate]);
@@ -220,6 +212,7 @@ function CrateScene(props: CrateSceneProps) {
   useEffect(() => {
     const canvas = gl.domElement;
     const redraw = () => invalidate();
+
     canvas.addEventListener("webglcontextrestored", redraw);
 
     return () => canvas.removeEventListener("webglcontextrestored", redraw);
@@ -233,7 +226,6 @@ function CrateScene(props: CrateSceneProps) {
     /** the case-study link whose picture or title is drawn frontmost at the event's point. */
     function linkAt(e: MouseEvent) {
       if (!state.current.revealed || (e.target as Element).closest("a, button")) return null;
-
       const canvas = gl.domElement.getBoundingClientRect();
 
       raycaster.setFromCamera(
@@ -243,15 +235,12 @@ function CrateScene(props: CrateSceneProps) {
         ),
         camera,
       );
-
       const hit = raycaster.intersectObjects(scene.children).at(0);
 
       if (!hit?.uv) return null;
-
       const i = faces.current.findIndex((face) => face === hit.object);
 
       if (i < 0) return null;
-
       const shot = latest.current.snapshot[i];
       const x = hit.uv.x * shot.rect.width;
       const y = (1 - hit.uv.y) * shot.rect.height;
@@ -259,12 +248,10 @@ function CrateScene(props: CrateSceneProps) {
 
       return shot.pictures.some(on) || on(shot.title) ? shot.title.link : null;
     }
-
     const hover = (e: PointerEvent) => void (stage.style.cursor = linkAt(e) ? "pointer" : "");
     // replayed on the page card's link, so modifier keys and the middle button open tabs and windows as on any link.
     // Chrome follows a link on a synthetic click with the middle button but not on a synthetic auxclick.
     const open = (e: MouseEvent) => void linkAt(e)?.dispatchEvent(new MouseEvent("click", e));
-
     const openMiddle = (e: MouseEvent) => {
       if (e.button === 1) open(e);
     };
@@ -292,14 +279,14 @@ function CrateScene(props: CrateSceneProps) {
       const face = faces.current[i];
 
       if (!g || !face) continue;
-
       const r = recordPose(i, p, layout);
+
       g.position.set(r.x, r.y, r.z);
       g.rotation.set(r.rot, 0, 0);
       (face.material as MeshBasicMaterial).map = textures.current[i];
     }
-
     const cam = stopPose(p, layout);
+
     camera.position.copy(cam.position);
     camera.quaternion.copy(cam.quaternion);
     camera.updateMatrixWorld();
@@ -310,6 +297,7 @@ function CrateScene(props: CrateSceneProps) {
     const { width, height } = layout.canvas;
     const { above, below } = layout.room;
     const lens = camera as PerspectiveCamera;
+
     lens.aspect = width / height;
     lens.setViewOffset(width, height, 0, -above, width, height + above + below);
   }, [layout, camera]);
@@ -323,30 +311,25 @@ function CrateScene(props: CrateSceneProps) {
     if (st.revealed) {
       // a frame asked for before the loop stopped would show the hidden canvas again.
       if (latest.current.frameloop === "never") return;
-
       if (!reducedMotion) {
         // a hidden canvas shows nothing to move from, so the records start where the scroll is.
         const from = eased.current === null || gl.domElement.style.visibility === "hidden" ? p : eased.current;
-        posed = eased.current = easeScrub(from, p, delta);
 
+        posed = eased.current = easeScrub(from, p, delta);
         // demand rendering waits for a request, and the records are still catching up.
         if (posed !== p) invalidate();
       }
-
       const queued = textureQueue.current.shift();
 
       if (queued !== undefined) buildTexture(queued);
-
       // demand rendering draws no frame of its own, so the rest of the queue asks for the next one.
       if (textureQueue.current.length) invalidate();
-
       worldPose(posed);
       gl.render(scene, camera);
       gl.domElement.style.visibility = "";
 
       return;
     }
-
     // programs are cached by whether a material has a map, so every face gets its map before the compile.
     const queued = textureQueue.current.shift();
 
@@ -355,11 +338,9 @@ function CrateScene(props: CrateSceneProps) {
 
       return;
     }
-
     if (!st.compileStarted) {
       st.compileStarted = true;
       worldPose(posed);
-
       gl.compileAsync(scene, camera).then(
         () => (st.compiled = true),
         (error: unknown) => {
@@ -370,9 +351,7 @@ function CrateScene(props: CrateSceneProps) {
 
       return;
     }
-
     if (!st.compiled) return;
-
     if (!st.warmed) {
       // one hidden render compiles the shadow pass, which only builds while casters draw.
       worldPose(posed);
@@ -381,7 +360,6 @@ function CrateScene(props: CrateSceneProps) {
 
       return;
     }
-
     worldPose(posed);
     gl.render(scene, camera);
     gl.domElement.style.visibility = "";

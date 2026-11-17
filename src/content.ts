@@ -109,6 +109,18 @@ export const projects: Project[] = [
         alt: "The virus gallery: a searchable grid of thumbnails for every virus, from random shapes to the crane game.",
       },
       {
+        src: "/work/thisisnotavirus/shell-game.webp",
+        width: 2880,
+        height: 1740,
+        alt: "The shell game in amber line art on black: the eye in the pyramid from the dollar bill fires a red laser at one of the mushroom caps on a gridded board while another bursts in a white flash, a hand reaches in from the right, and ticker lines, coins and small watching eyes fill the dark behind.",
+      },
+      {
+        src: "/work/thisisnotavirus/doors.webp",
+        width: 2880,
+        height: 1740,
+        alt: "Doors: columns of cyan, blue and violet bars of different heights closing in from the top and bottom of the screen on a bright cyan band across the middle.",
+      },
+      {
         src: "/work/thisisnotavirus/crane-game.webp",
         width: 2880,
         height: 1740,
@@ -138,7 +150,7 @@ export const projects: Project[] = [
       {
         heading: "What I built",
         paragraphs: [
-          "A shell that loads each animation, which the site calls a virus, into an iframe and switches to another at a random interval of 2 to 11 seconds, with skip, pause, reload, fullscreen and keyboard controls. There are 17 viruses, among them a 3D claw-crane game on Three.js and Rapier physics and a GLSL sky timelapse with shifting cloud cover. A Lab lets visitors blend two viruses into a mix that is saved in the browser and joins the playlist, and a searchable gallery and a Share button link to any single virus.",
+          "A shell that loads each animation, which the site calls a virus, into an iframe and switches to another at a random interval of 2 to 11 seconds, with skip, pause, reload, fullscreen and keyboard controls. There are 17 viruses, among them a 3D claw-crane game on Three.js and Rapier physics, a GLSL sky timelapse with shifting cloud cover, a shell game in canvas line art where the eye from the dollar bill watches mushroom caps shuffle and double from 3 to 24 and shoots some of them, and Doors, columns of colored bars that slide open and shut at different speeds. A Lab lets visitors blend two viruses into a mix that is saved in the browser and joins the playlist, and a searchable gallery and a Share button link to any single virus.",
         ],
       },
       {

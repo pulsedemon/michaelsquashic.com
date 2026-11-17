@@ -7,9 +7,9 @@ import {
   type CSSProperties,
   type RefObject,
 } from "react";
+import type { Snapshot } from "./cardCapture";
 import { projects } from "./content";
 import type { Layout } from "./crate";
-import type { Snapshot } from "./CrateCanvas";
 import { must } from "./must";
 import { ProjectLink } from "./ProjectLink";
 
@@ -17,7 +17,8 @@ const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const last = projects.length - 1;
 
 /** the scene's code, loaded apart from the page so case studies and the page's first render don't wait on three.js. */
-const loadScene = () => Promise.all([import("./CrateCanvas"), import("./crate"), import("@react-three/fiber")]);
+const loadScene = () =>
+  Promise.all([import("./CrateCanvas"), import("./crate"), import("@react-three/fiber"), import("./cardCapture")]);
 
 type SceneModules = Awaited<ReturnType<typeof loadScene>>;
 
@@ -171,7 +172,7 @@ export function WorkCrate({ grid }: { grid: RefObject<HTMLDivElement | null> }) 
       );
     }
     const capture = () => {
-      const [{ captureCards }, { crateLayout }] = modules;
+      const [, { crateLayout }, , { captureCards }] = modules;
 
       setScene({ snapshot: captureCards(must(grid.current)), layout: measureLayout(crateLayout) });
     };

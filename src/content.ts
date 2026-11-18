@@ -238,6 +238,7 @@ export const projects: Project[] = [
     id: "pr-review-loop",
     title: "PR review loop",
     stack: ["Python", "Bash", "GitHub CLI", "GitHub Actions"],
+    source: "https://github.com/pulsedemon/pr-review-loop-skill",
     role: "Author",
     years: "2026",
     cycle: ["Review", "Fix", "CI", "Repeat"],
@@ -251,22 +252,24 @@ export const projects: Project[] = [
       {
         heading: "What I built",
         paragraphs: [
-          "A skill you install into Cursor, Claude Code, Codex or opencode. A five-step procedure covers setup, review, fixes, CI and a final summary comment. Eleven reviewer personas and a separate adversary reviewer are declared in one manifest. Python and Bash helpers do the deterministic parts: pushing, waiting for CI, matching findings, choosing the panel, and running each repository's tests and linters for Node, Python, Go, Rust or Ruby. There is an installer for the four hosts, 72 bats test files in CI alongside shellcheck, markdownlint and ruff, and an offline harness that measures what the loop misses.",
+          "A skill you install into Cursor, Claude Code, Codex or opencode. It instructs the host agent to coordinate specialist reviewers, fix blockers, run the repository's checks and handle PR feedback, with a separate adversarial review before approval. Python and Bash helpers validate findings, choose reviewers, push, wait for CI and compute stopping conditions. The skill tells the agent to leave merging to a person.",
         ],
       },
       {
         heading: "How it works",
         paragraphs: [
-          "Each reviewer must return JSON that passes a schema check. Duplicate findings merge by a fixed rule: same file, within 5 lines, and at least 0.6 word overlap. One script owns every path that can raise a suggestion to a blocker.",
-          "From the second round on, a persona can be gated: it sees only the last commit's changes and answers one question, is this in my area? Personas that answer no sit the round out, any with an open blocker always run, and the full panel runs again before approval.",
-          "Safety lives in scripts, not prompts. The push script refuses protected branches, force-pushes and skipped hooks, and requires the expected remote commit so a rewound remote gets caught. The no-progress and stuck-CI exits are computed by a script rather than left to the model.",
-          "Prompts are treated as code. The persona manifest regenerates parts of the skill file and the output schema, CI fails on any drift, and a test caps the skill file's length.",
+          "Reviewers are required to return JSON, which a script validates before synthesis. Duplicate findings merge by a fixed matching rule, and one script owns the rules for promoting suggestions to blockers.",
+          "Later rounds can run a separate relevance check for each reviewer against the latest changes. The procedure requires invalid answers to be discarded. A selection script includes reviewers that owned blockers and any whose answer is missing. When a reduced panel finds no blockers, the procedure requires a full panel review before the adversarial pass.",
+          "The push helper refuses protected branch names and the wrong local branch. It checks that the remote is still at the expected commit and that the new commit builds on it, then pushes that exact commit with a lease and hooks enabled.",
+          "The procedure waits for CI on the approval path and turns failed checks into blockers. Before success, a completion helper checks the recorded reviews, adversarial response, matching local and remote commits, and required comment replies. It also computes the stopping conditions for repeated blockers and repeated CI failures.",
+          "Prompts are treated as code. A shared reviewer manifest generates parts of the skill file and output schema, with CI checking for drift. I also built an offline tool that compares external review comments against the loop's findings and uses manual labels to report missed issues.",
         ],
       },
       {
         heading: "Where it stands",
         paragraphs: [
-          "Version 0.1.0, started in April 2026, with 103 merged pull requests. Beyond its own repository it has reviewed 39 pull requests in two others.",
+          "The source is public under the MIT license. CI checks the helpers, shell scripts, Python, Markdown and generated files.",
+          "Recorded Codex runs cover live GitHub approval and a local edit loop. An integrated Claude Code run demonstrated a verified repair and push, green CI and an accurate summary of the adversary's suggestion. Its audit records permission and comment-snapshot recovery limits. Installer checks cover all supported hosts; Cursor and opencode have no recorded runtime verification.",
         ],
       },
     ],

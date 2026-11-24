@@ -1,9 +1,12 @@
-import { contact } from "./content";
+import { contact, greetings } from "./content";
+
+// picked once per load, outside the component, so a rerender never swaps it.
+const greeting = greetings[Math.floor(Math.random() * greetings.length)];
 
 export function Footer() {
   return (
     <footer id="contact" className="site-footer">
-      <h2>Say hi.</h2>
+      <h2>{greeting}</h2>
       <ul className="contact-links">
         <li>
           <a href={`mailto:${contact.email}`}>

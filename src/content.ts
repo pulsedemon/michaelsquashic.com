@@ -392,3 +392,14 @@ export const contact = {
   linkedin: "https://www.linkedin.com/in/michaelsquashic",
   github: "https://github.com/pulsedemon",
 };
+
+/** the footer heading, one picked at random on each page load. each word has to fit in 280px at the 72px display size, or it breaks mid-word on a 320px phone. */
+export const greetings = [
+  "Say hi.",
+  "Still here?",
+  "Your move.",
+  "Knock knock.",
+  "Ping me.",
+  "Drop a line.",
+  "End of file.",
+];

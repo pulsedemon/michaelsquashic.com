@@ -1,11 +1,17 @@
 import assert from "node:assert/strict";
 import { ESLint } from "eslint";
-import { test } from "vitest";
+import { beforeAll, test } from "vitest";
 
 const eslint = new ESLint({
   // the typed rules need files on disk in the TypeScript project, and these sources exist only as text.
   overrideConfig: { languageOptions: { parserOptions: { projectService: false } } },
   ruleFilter: ({ ruleId }) => ruleId === "local/pascal-case-tsx" || ruleId === "no-restricted-syntax",
+});
+
+// loading eslint.config.js and its plugins is cached per instance; doing it here puts it under the
+// hook's 10 s timeout instead of the first test's 5 s.
+beforeAll(async () => {
+  await eslint.calculateConfigForFile("src/Thing.tsx");
 });
 
 async function lint(filePath: string, source: string) {

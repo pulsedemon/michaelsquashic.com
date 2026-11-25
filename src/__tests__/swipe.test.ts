@@ -14,6 +14,7 @@ test("a released drag lands on the next record past a small threshold, or furthe
   assert.equal(swipeSettle(1, 0.85, 4), 0);
   assert.equal(swipeSettle(1, 2.4, 4), 2);
   assert.equal(swipeSettle(1, 2.7, 4), 3);
+  assert.equal(swipeSettle(3, 1.4, 4), 1);
   assert.equal(swipeSettle(4, 4.3, 4), 4);
   assert.equal(swipeSettle(0.3, 0.1, 4), 0);
   // from between records the start rounds to 2, so a 0.2 pull back lands one record before it.

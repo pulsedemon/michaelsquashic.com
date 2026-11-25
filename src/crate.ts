@@ -31,8 +31,8 @@ const SUN = new Vector3(-10, 20, 14).normalize();
 
 type Size = { width: number; height: number };
 /**
- * where the bar leaves room for the records, in CSS px from the canvas's top left: its top, or the canvas's height when it
- * stands down the right side from `sideLeft`, and the height kept clear above the records.
+ * where the bar leaves room for the records, in CSS px from the canvas's top left: its top, or its bottom when it stands
+ * down the right side from `sideLeft`, and the height kept clear above the records.
  */
 type Hud = { barTop: number; topInset: number; sideLeft?: number };
 /** the grid's computed track sizes, in CSS px. */

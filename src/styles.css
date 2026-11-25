@@ -456,6 +456,8 @@ a {
     top: 0;
     left: auto;
     width: min(280px, 34vw);
+    /* a 568px phone's third is too narrow for the two buttons side by side; the bar widens leftward instead. */
+    min-width: max-content;
     display: grid;
     grid-template-columns: 1fr 1fr;
     align-content: center;

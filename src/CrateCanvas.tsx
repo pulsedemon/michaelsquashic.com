@@ -33,6 +33,7 @@ import { must } from "./must";
 /** the stylesheet's one-column breakpoint, where a record draws its picture's `phoneCrop`. */
 const phone = matchMedia("(max-width: 760px)");
 const phoneCrops = new Map(projects.flatMap((p) => p.images ?? []).map((image) => [image.src, image.phoneCrop]));
+
 /** Fiber's DPR range, which the canvas and the textures both use. */
 const DPR: [min: number, max: number] = [1, 2];
 const canvasDpr = () => Math.min(Math.max(devicePixelRatio, DPR[0]), DPR[1]);

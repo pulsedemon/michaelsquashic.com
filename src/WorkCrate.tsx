@@ -172,8 +172,8 @@ export function WorkCrate({ grid }: { grid: RefObject<HTMLDivElement | null> }) 
         { width: s.clientWidth, height: s.clientHeight },
         { column, row },
         side
-          ? { barTop: b.bottom - origin.top, topInset, sideLeft: b.left - origin.left }
-          : { barTop: b.top - origin.top, topInset },
+          ? { floor: b.bottom - origin.top, topInset, sideLeft: b.left - origin.left }
+          : { floor: b.top - origin.top, topInset },
         projects.length,
       );
     }
@@ -275,6 +275,7 @@ export function WorkCrate({ grid }: { grid: RefObject<HTMLDivElement | null> }) 
       x: number;
       y: number;
       from: number;
+      at: number;
       axis: "x" | "y" | null;
       track: ReturnType<typeof measureTrack>;
     } | null = null;
@@ -291,7 +292,14 @@ export function WorkCrate({ grid }: { grid: RefObject<HTMLDivElement | null> }) 
       // a second finger is a pinch: it ends the drag without stepping.
       if (e.touches.length > 1) drag = null;
       else if (!(e.target as Element).closest("a, button") && raw >= -1 && raw <= last * track.step + 1)
-        drag = { x: e.touches[0].clientX, y: e.touches[0].clientY, from: scrub.current, axis: null, track };
+        drag = {
+          x: e.touches[0].clientX,
+          y: e.touches[0].clientY,
+          from: scrub.current,
+          at: scrub.current,
+          axis: null,
+          track,
+        };
     };
     const onMove = (e: TouchEvent) => {
       if (!drag) return;
@@ -305,10 +313,12 @@ export function WorkCrate({ grid }: { grid: RefObject<HTMLDivElement | null> }) 
       }
       if (drag.axis === "y") return;
       e.preventDefault();
-      scrubTo(swipeScrub(drag.from, dx, s.clientWidth, last), false);
+      drag.at = swipeScrub(drag.from, dx, s.clientWidth, last);
+      scrubTo(drag.at, false);
     };
+    // settles from where the finger left the records: `scrub` follows the scroll a frame late.
     const onEnd = () => {
-      if (drag?.axis === "x") scrubTo(swipeSettle(drag.from, scrub.current, last), true);
+      if (drag?.axis === "x") scrubTo(swipeSettle(drag.from, drag.at, last), true);
       drag = null;
     };
 

@@ -30,8 +30,11 @@ const CLEAR = 0.3;
 const SUN = new Vector3(-10, 20, 14).normalize();
 
 type Size = { width: number; height: number };
-/** the bottom bar's top, in CSS px from the canvas's top, and the height kept clear above the records. */
-type Hud = { barTop: number; topInset: number };
+/**
+ * where the bar leaves room for the records, in CSS px from the canvas's top left: its top, or the canvas's height when it
+ * stands down the right side from `sideLeft`, and the height kept clear above the records.
+ */
+type Hud = { barTop: number; topInset: number; sideLeft?: number };
 /** the grid's computed track sizes, in CSS px. */
 type Tracks = { column: number; row: number };
 
@@ -250,12 +253,16 @@ function lookFrom(position: Vector3, target: Vector3): Quaternion {
   return new Quaternion().setFromRotationMatrix(new Matrix4().lookAt(position, target, UP));
 }
 
-/** the fit box in normalised device coordinates: 8–92% of the width, between the top inset and the bottom bar less 4% of the height each. */
+/**
+ * the fit box in normalised device coordinates: from 8% of the width to 92% of it, or to 4% short of a side bar, and between
+ * the top inset and the bar's top less 4% of the height each.
+ */
 function fitBox(canvas: Size, hud: Hud) {
   const vh = canvas.height;
   const y = (px: number) => 1 - (2 * px) / vh;
+  const right = hud.sideLeft === undefined ? 0.84 : (2 * (hud.sideLeft - 0.04 * canvas.width)) / canvas.width - 1;
 
-  return { left: -0.84, right: 0.84, top: y(hud.topInset + 0.04 * vh), bottom: y(hud.barTop - 0.04 * vh) };
+  return { left: -0.84, right, top: y(hud.topInset + 0.04 * vh), bottom: y(hud.barTop - 0.04 * vh) };
 }
 
 const projector = new PerspectiveCamera(FOV, 1, 0.1, 1000);

@@ -4,22 +4,29 @@ import { test } from "vitest";
 import { projects } from "../content";
 import { crateLayout, easeScrub, FOV, type Layout, recordCorners, recordPose, stopPose } from "../crate";
 
-// measured from the live page in Chrome at each size: the stage, the grid's tracks and the bottom bar.
-const measured = [
+type Hud = { barTop: number; topInset: number; sideLeft?: number };
+
+// measured from the live page in Chrome at each size: the stage, the grid's tracks and the bar, which stands down the right side on a phone held sideways.
+const measured: { canvas: { width: number; height: number }; tracks: { column: number; row: number }; hud: Hud }[] = [
   {
     canvas: { width: 1440, height: 900 },
     tracks: { column: 630.5, row: 548.141 },
-    hud: { barTop: 795, topInset: 105 },
+    hud: { barTop: 792, topInset: 108 },
   },
   {
     canvas: { width: 700, height: 900 },
     tracks: { column: 616, row: 535.922 },
-    hud: { barTop: 822.625, topInset: 77.4 },
+    hud: { barTop: 819.625, topInset: 80.4 },
   },
-  { canvas: { width: 500, height: 727 }, tracks: { column: 440, row: 387.672 }, hud: { barTop: 601, topInset: 73 } },
+  { canvas: { width: 500, height: 727 }, tracks: { column: 440, row: 387.672 }, hud: { barTop: 595, topInset: 76 } },
+  {
+    canvas: { width: 874, height: 402 },
+    tracks: { column: 371.219, row: 330.234 },
+    hud: { barTop: 402, topInset: 89.448, sideLeft: 594 },
+  },
 ];
 // synthetic: records this shallow make the camera rise to see past the record leaning forward in front.
-const shallow = {
+const shallow: (typeof measured)[number] = {
   canvas: { width: 1440, height: 900 },
   tracks: { column: 640, row: 300 },
   hud: { barTop: 820, topInset: 70 },
@@ -53,7 +60,7 @@ for (const f of fixtures) {
     const { width, height } = f.canvas;
     const box = {
       left: 0.08 * width,
-      right: 0.92 * width,
+      right: f.hud.sideLeft === undefined ? 0.92 * width : f.hud.sideLeft - 0.04 * width,
       top: f.hud.topInset + 0.04 * height,
       bottom: f.hud.barTop - 0.04 * height,
     };

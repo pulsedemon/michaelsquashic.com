@@ -16,7 +16,7 @@ import {
   type Texture,
 } from "three";
 import type { Area, CardShot, Snapshot } from "./cardCapture";
-import { screenshotSize } from "./content";
+import { projects, screenshotSize } from "./content";
 import {
   BODY_DEPTH,
   BODY_GAP,
@@ -30,6 +30,9 @@ import {
 } from "./crate";
 import { must } from "./must";
 
+/** the stylesheet's one-column breakpoint, where a record draws its picture's `phoneCrop`. */
+const phone = matchMedia("(max-width: 760px)");
+const phoneCrops = new Map(projects.flatMap((p) => p.images ?? []).map((image) => [image.src, image.phoneCrop]));
 /** Fiber's DPR range, which the canvas and the textures both use. */
 const DPR: [min: number, max: number] = [1, 2];
 const canvasDpr = () => Math.min(Math.max(devicePixelRatio, DPR[0]), DPR[1]);
@@ -67,6 +70,24 @@ function cardTexture(shot: CardShot, scale: number, mipmaps: boolean) {
     const file = p.img.srcset
       ? screenshotSize(new URL(p.img.currentSrc).pathname)
       : { width: p.img.naturalWidth, height: p.img.naturalHeight };
+    const crop = phone.matches ? phoneCrops.get(p.img.getAttribute("src") ?? "") : undefined;
+
+    if (crop) {
+      const sw = crop.width * file.width;
+
+      g.drawImage(
+        p.img,
+        crop.x * file.width,
+        crop.y * file.height,
+        sw,
+        (sw * p.height) / p.width,
+        p.x,
+        p.y,
+        p.width,
+        p.height,
+      );
+      continue;
+    }
     const fit = Math.max(p.width / file.width, p.height / file.height);
     const sw = p.width / fit;
     const sh = p.height / fit;

@@ -1,5 +1,5 @@
 import { Component, useRef, useState, type ReactNode } from "react";
-import { intro, jobs, projects, srcSet } from "./content";
+import { intro, jobs, projects, srcSet, type Screenshot } from "./content";
 import { HeroField } from "./HeroField";
 import { ProjectLink } from "./ProjectLink";
 import { WorkCrate } from "./WorkCrate";
@@ -28,15 +28,7 @@ export function Page({ webgl }: { webgl: boolean }) {
           {projects.map((p) => (
             <article key={p.id} className="card">
               {/* the title link already says what it shows; the case study carries the full description. */}
-              {p.images?.[0] && (
-                <img
-                  className="card-shot"
-                  src={p.images[0].src}
-                  srcSet={srcSet(p.images[0])}
-                  sizes={cardSizes}
-                  alt=""
-                />
-              )}
+              {p.images?.[0] && <CardShot image={p.images[0]} crate={crate} />}
               {p.cycle && (
                 <div className="card-cycle">
                   {/* one arrow, 152 by 132, turned to point clockwise through each gap between the steps. */}
@@ -75,6 +67,21 @@ export function Page({ webgl }: { webgl: boolean }) {
 
 /** picks a file wide enough for the crate's drawing of a card's picture: the screen's width in one column, else the larger of its height and 56% of its width, up to its width. */
 const cardSizes = "(max-width: 760px) 100vw, min(100vw, max(100vh, 56vw))";
+
+/** a card's picture. in the crate, a phone draws only its `phoneCrop`, so it asks for a file wide enough for the crop. */
+function CardShot({ image, crate }: { image: Screenshot; crate: boolean }) {
+  const crop = crate ? image.phoneCrop : undefined;
+
+  return (
+    <img
+      className="card-shot"
+      src={image.src}
+      srcSet={srcSet(image)}
+      sizes={crop ? `(max-width: 760px) ${Math.round(100 / crop.width)}vw, ${cardSizes}` : cardSizes}
+      alt=""
+    />
+  );
+}
 
 /** falls back to the cards when the crate throws, which is how Fiber reports a renderer it couldn't create. */
 class CrateBoundary extends Component<{ onError: () => void; children: ReactNode }, { failed: boolean }> {

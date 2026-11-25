@@ -12,6 +12,7 @@ import { projects } from "./content";
 import type { Layout } from "./crate";
 import { must } from "./must";
 import { ProjectLink } from "./ProjectLink";
+import { swipeScrub, swipeSettle } from "./swipe";
 
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const last = projects.length - 1;
@@ -141,8 +142,9 @@ export function WorkCrate({ grid }: { grid: RefObject<HTMLDivElement | null> }) 
     let size = { width: 0, height: 0 };
     // set once the scene's code loads, before the observer starts.
     let modules: SceneModules;
+    const pictures = [...must(grid.current).querySelectorAll("img")];
 
-    /** the crate for the stage, from the grid's tracks and the bottom bar. */
+    /** the crate for the stage, from the grid's tracks and the bar, below the records or down their right side. */
     function measureLayout(crateLayout: SceneModules[1]["crateLayout"]): Layout {
       const style = getComputedStyle(must(grid.current));
       const column = parseFloat(style.gridTemplateColumns);
@@ -163,11 +165,15 @@ export function WorkCrate({ grid }: { grid: RefObject<HTMLDivElement | null> }) 
         parseFloat(padding.paddingTop) +
         parseFloat(padding.paddingBottom) +
         must(previous.current).getBoundingClientRect().height;
+      // the stylesheet stands the bar down the right side on a phone held sideways; the records then use the full height.
+      const side = b.left > origin.left + 1;
 
       return crateLayout(
         { width: s.clientWidth, height: s.clientHeight },
         { column, row },
-        { barTop: b.top - origin.top, topInset },
+        side
+          ? { barTop: s.clientHeight, topInset, sideLeft: b.left - origin.left }
+          : { barTop: b.top - origin.top, topInset },
         projects.length,
       );
     }
@@ -211,7 +217,7 @@ export function WorkCrate({ grid }: { grid: RefObject<HTMLDivElement | null> }) 
             if (!cancelled) setLoaded(m);
           }),
           document.fonts.ready,
-          ...[...must(grid.current).querySelectorAll("img")].map((img) =>
+          ...pictures.map((img) =>
             img.decode().catch((error: unknown) => console.error(`Couldn't decode ${img.src}`, error)),
           ),
         ]);
@@ -226,6 +232,8 @@ export function WorkCrate({ grid }: { grid: RefObject<HTMLDivElement | null> }) 
       size = { width: s.clientWidth, height: s.clientHeight };
       capture();
       resized.observe(s);
+      // a resize can pick a wider file from a picture's srcset after the resize's own capture drew the old one.
+      for (const img of pictures) img.addEventListener("load", capture);
     };
 
     void load();
@@ -233,6 +241,7 @@ export function WorkCrate({ grid }: { grid: RefObject<HTMLDivElement | null> }) 
     return () => {
       cancelled = true;
       resized.disconnect();
+      for (const img of pictures) img.removeEventListener("load", capture);
       removeEventListener("scroll", resample);
       removeEventListener("pageshow", resample);
       removeEventListener("resize", onResize);
@@ -257,6 +266,58 @@ export function WorkCrate({ grid }: { grid: RefObject<HTMLDivElement | null> }) 
     }
   });
 
+  // a sideways drag on the pinned stage scrubs the records under the finger, then settles on a whole one.
+  // mounted once: a re-render as the drag passes half a record must not drop the drag.
+  useEffect(() => {
+    const s = must(stage.current);
+    let drag: { x: number; y: number; from: number; axis: "x" | "y" | null } | null = null;
+
+    const scrubTo = (p: number, smooth: boolean) => {
+      const { top, step } = measureTrack();
+
+      scrollTo({ top: top + p * step, behavior: smooth && !reducedMotion ? "smooth" : "auto" });
+    };
+    const onStart = (e: TouchEvent) => {
+      const { top, step } = measureTrack();
+      const raw = scrollY - top;
+
+      // a second finger is a pinch: it ends the drag without stepping.
+      if (e.touches.length > 1) drag = null;
+      else if (!(e.target as Element).closest("a, button") && raw >= -1 && raw <= last * step + 1)
+        drag = { x: e.touches[0].clientX, y: e.touches[0].clientY, from: scrub.current, axis: null };
+    };
+    const onMove = (e: TouchEvent) => {
+      if (!drag) return;
+      const dx = e.touches[0].clientX - drag.x;
+      const dy = e.touches[0].clientY - drag.y;
+
+      if (!drag.axis) {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) < 8) return;
+        // a move the browser has already taken for its own scroll can't be cancelled, so it stays a scroll.
+        drag.axis = Math.abs(dx) > Math.abs(dy) && e.cancelable ? "x" : "y";
+      }
+      if (drag.axis === "y") return;
+      e.preventDefault();
+      scrubTo(swipeScrub(drag.from, dx, s.clientWidth, last), false);
+    };
+    const onEnd = () => {
+      if (drag?.axis === "x") scrubTo(swipeSettle(drag.from, scrub.current, last), true);
+      drag = null;
+    };
+
+    s.addEventListener("touchstart", onStart, { passive: true });
+    s.addEventListener("touchmove", onMove, { passive: false });
+    s.addEventListener("touchend", onEnd);
+    s.addEventListener("touchcancel", onEnd);
+
+    return () => {
+      s.removeEventListener("touchstart", onStart);
+      s.removeEventListener("touchmove", onMove);
+      s.removeEventListener("touchend", onEnd);
+      s.removeEventListener("touchcancel", onEnd);
+    };
+  }, []);
+
   // thrown here, where the crate's error boundary sees it and falls back to the cards.
   if (loadError) throw loadError;
 
@@ -278,6 +339,9 @@ export function WorkCrate({ grid }: { grid: RefObject<HTMLDivElement | null> }) 
       <div className="crate-stage" ref={stage}>
         <p className="crate-title" aria-hidden="true">
           Work.
+        </p>
+        <p className="crate-count" aria-hidden="true">
+          {shown + 1}/{projects.length}
         </p>
         {CrateCanvas && (
           <CrateCanvas

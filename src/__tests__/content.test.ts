@@ -28,3 +28,14 @@ test("every srcSet candidate is a file of the size screenshotSize gives", () => 
     }
   }
 });
+
+// a crop running off its file would draw the page's grey into the record.
+test("every phone crop stays inside its file at the record picture's 16:10", () => {
+  for (const { src, width, height, phoneCrop } of projects.flatMap((p) => p.images ?? [])) {
+    if (!phoneCrop) continue;
+    const { x, y, width: share } = phoneCrop;
+
+    assert.ok(x >= 0 && y >= 0 && x + share <= 1, src);
+    assert.ok(y * height + (share * width * 10) / 16 <= height, src);
+  }
+});

@@ -307,6 +307,27 @@ a {
   margin-inline: calc(-1 * var(--gutter));
 }
 
+/* the scene rides up into its empty top while the stage scrolls in, then settles at half the scroll's speed until the stage pins.
+   it stays as far under the Work heading as a display heading's top margin, 0.5em: the heading's 0.25em bottom margin and as much again. */
+@media (prefers-reduced-motion: no-preference) {
+  .crate {
+    view-timeline: --crate block;
+  }
+
+  .crate-scene {
+    --rise: max(0px, var(--settle) - 0.25 * var(--display));
+    animation: crate-settle linear both;
+    animation-timeline: --crate;
+    animation-range: contain calc(-2 * var(--rise)) contain 0%;
+  }
+}
+
+@keyframes crate-settle {
+  from {
+    translate: 0 calc(-1 * var(--rise));
+  }
+}
+
 /* fills the screen with the mobile URL bar collapsed, so it never resizes when the bar moves. a sideways drag steps the records; pinch zoom stays the browser's. */
 .crate-stage {
   position: sticky;

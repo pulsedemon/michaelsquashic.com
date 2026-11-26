@@ -1,5 +1,5 @@
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useLayoutEffect, useMemo, useRef, type RefObject } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, type CSSProperties, type RefObject } from "react";
 import {
   BoxGeometry,
   CanvasTexture,
@@ -136,7 +136,7 @@ type CrateCanvasProps = Omit<CrateSceneProps, "snapshot" | "layout"> & {
 };
 
 export function CrateCanvas({ scene, ...props }: CrateCanvasProps) {
-  const { above = 0, below = 0 } = scene?.layout.room ?? {};
+  const { above = 0, below = 0, clear = 0 } = scene?.layout.room ?? {};
 
   return (
     <Canvas
@@ -147,16 +147,20 @@ export function CrateCanvas({ scene, ...props }: CrateCanvasProps) {
       resize={{ scroll: false }}
       // manual, because the scene sets the aspect from the stage and Fiber would set it from the taller canvas.
       camera={{ fov: FOV, near: 0.1, far: 1000, manual: true }}
+      className="crate-scene"
       // laid out in the stage, so the browser scrolls it in and out with the page. taller than the stage by what the scene draws past it.
-      style={{
-        position: "absolute",
-        top: -above,
-        left: 0,
-        width: "100%",
-        height: `calc(100% + ${above + below}px)`,
-        zIndex: 1,
-        pointerEvents: "none",
-      }}
+      style={
+        {
+          "--settle": `${clear}px`,
+          position: "absolute",
+          top: -above,
+          left: 0,
+          width: "100%",
+          height: `calc(100% + ${above + below}px)`,
+          zIndex: 1,
+          pointerEvents: "none",
+        } as CSSProperties
+      }
       aria-hidden
       // hidden until the reveal frame, which comes after every texture, the compile and the shadow pass's warm-up.
       onCreated={({ gl }) => void (gl.domElement.style.visibility = "hidden")}

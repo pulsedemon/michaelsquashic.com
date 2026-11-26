@@ -84,7 +84,8 @@ export function crateLayout(canvas: Size, tracks: Tracks, hud: Hud, n: number): 
 
 /**
  * CSS px the scene draws past the stage: above it at the first stop, which is what scrolls in, and below it at the
- * last, which is what scrolls out. shadows count, by the footprints of the corners that cast them.
+ * last, which is what scrolls out. shadows count, by the footprints of the corners that cast them. `clear` is the
+ * empty height above the scene at the first stop.
  */
 function roomFor(l: LayoutBase, stops: CameraState[]) {
   const reach = (p: number) => {
@@ -97,8 +98,13 @@ function roomFor(l: LayoutBase, stops: CameraState[]) {
     return project([...points, ...shadows], stops[p], l.canvas.width / l.canvas.height).map((q) => q.y);
   };
   const px = (ndc: number) => Math.max(0, Math.ceil((ndc / 2) * l.canvas.height));
+  const top = Math.max(...reach(0));
 
-  return { above: px(Math.max(...reach(0)) - 1), below: px(-1 - Math.min(...reach(l.last))) };
+  return {
+    above: px(top - 1),
+    below: px(-1 - Math.min(...reach(l.last))),
+    clear: Math.max(0, Math.floor(((1 - top) / 2) * l.canvas.height)),
+  };
 }
 
 /** where the sun casts a point onto the ground at height `y`. */

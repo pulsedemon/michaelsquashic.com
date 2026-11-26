@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
 import { must } from "./must";
 
-const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const columns = 10;
 /** how long the pointer can rest before the bars go back to rippling. */
 const idleMs = 3000;
@@ -11,7 +10,7 @@ type Bar = { x: number; y: number; column: number; row: number; angle: number };
 const ripple = (bar: Bar, now: number) => Math.sin(now / 550 + bar.column * 0.5 + bar.row * 0.3) * (Math.PI / 3);
 
 /** bars beside the hero's text, or under it on a phone: they point at the pointer or a finger, and ripple once it rests or leaves the window. */
-export function HeroField() {
+export function HeroField({ reducedMotion }: { reducedMotion: boolean }) {
   const canvas = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -117,7 +116,7 @@ export function HeroField() {
       removeEventListener("pointerout", onOut);
       removeEventListener("touchmove", onTouch);
     };
-  }, []);
+  }, [reducedMotion]);
 
   return <canvas className="hero-field" ref={canvas} aria-hidden="true" />;
 }

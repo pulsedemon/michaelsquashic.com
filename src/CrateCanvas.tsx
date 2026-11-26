@@ -191,6 +191,11 @@ function CrateScene(props: CrateSceneProps) {
   /** the scrub position the records are drawn at, which trails the scroll's. */
   const eased = useRef<number | null>(null);
 
+  useLayoutEffect(() => {
+    eased.current = null;
+    invalidate();
+  }, [reducedMotion, invalidate]);
+
   const state = useRef({
     compileStarted: false,
     compiled: false,

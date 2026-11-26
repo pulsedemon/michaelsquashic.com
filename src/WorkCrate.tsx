@@ -14,7 +14,6 @@ import { must } from "./must";
 import { ProjectLink } from "./ProjectLink";
 import { swipeScrub, swipeSettle } from "./swipe";
 
-const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const last = projects.length - 1;
 
 /** the scene's code, loaded apart from the page so case studies and the page's first render don't wait on three.js. */
@@ -27,7 +26,7 @@ type SceneModules = Awaited<ReturnType<typeof loadScene>>;
 type Sample = { p: number; pinned: boolean };
 
 /** the Work section as a scroll track: its stage pins the crate full screen while the scroll flips through the records. */
-export function WorkCrate({ grid }: { grid: RefObject<HTMLDivElement | null> }) {
+export function WorkCrate({ grid, reducedMotion }: { grid: RefObject<HTMLDivElement | null>; reducedMotion: boolean }) {
   const track = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const bar = useRef<HTMLElement>(null);
@@ -121,6 +120,9 @@ export function WorkCrate({ grid }: { grid: RefObject<HTMLDivElement | null> }) 
 
   const onSample = useEffectEvent(sample);
 
+  const stepBehavior: ScrollBehavior = reducedMotion ? "auto" : "smooth";
+  const swipeBehavior = useEffectEvent(() => stepBehavior);
+
   function stepBy(direction: 1 | -1) {
     const i = Math.round(scrub.current) + direction;
 
@@ -130,7 +132,7 @@ export function WorkCrate({ grid }: { grid: RefObject<HTMLDivElement | null> }) 
     if (i === 0 || i === last) must((direction === 1 ? previous : next).current).focus({ preventScroll: true });
     const { top, step } = measureTrack();
 
-    scrollTo({ top: top + i * step, behavior: reducedMotion ? "auto" : "smooth" });
+    scrollTo({ top: top + i * step, behavior: stepBehavior });
   }
 
   useEffect(() => {
@@ -257,7 +259,7 @@ export function WorkCrate({ grid }: { grid: RefObject<HTMLDivElement | null> }) 
   }, [grid]);
 
   // the scene's room moves the track, so the scroll is sampled again once the margins are in.
-  useLayoutEffect(() => void onSample(), [scene]);
+  useLayoutEffect(() => void onSample(), [scene, reducedMotion]);
 
   // each control's scroll margin reaches the stage's edges, so the browser's scroll to a focused control pins the stage.
   // left to itself, Chrome centres the control, which stops part-way into the track on the second record.
@@ -289,7 +291,7 @@ export function WorkCrate({ grid }: { grid: RefObject<HTMLDivElement | null> }) 
     const scrubTo = (p: number, smooth: boolean) => {
       const { top, step } = must(drag).track;
 
-      scrollTo({ top: top + p * step, behavior: smooth && !reducedMotion ? "smooth" : "auto" });
+      scrollTo({ top: top + p * step, behavior: smooth ? swipeBehavior() : "auto" });
     };
     const onStart = (e: TouchEvent) => {
       const track = measureTrack();

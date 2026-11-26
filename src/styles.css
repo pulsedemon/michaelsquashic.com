@@ -57,7 +57,8 @@ a {
 .page h1,
 .page h2,
 .site-footer h2,
-.crate-title {
+.crate-title,
+.crate-count {
   margin: 0.5em 0 0.25em;
   overflow-wrap: anywhere;
   font-size: var(--display);
@@ -99,8 +100,11 @@ a {
     max-width: 34ch;
   }
 
+  /* a band under the intro, its rows as many as fit. */
   .hero-field {
-    display: none;
+    height: auto;
+    aspect-ratio: 2 / 1;
+    margin-top: 40px;
   }
 }
 
@@ -114,8 +118,12 @@ a {
   text-decoration-thickness: 2px;
 }
 
-/* filled, so the controls stay legible over the records drawn behind them. */
+/* filled, so the controls stay legible over the records drawn behind them. 44px tall at least, iOS's minimum touch target. */
 .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
   background: var(--concrete);
   border: 2px solid var(--black);
   padding: 10px 18px;
@@ -299,11 +307,12 @@ a {
   margin-inline: calc(-1 * var(--gutter));
 }
 
-/* fills the screen with the mobile URL bar collapsed, so it never resizes when the bar moves. */
+/* fills the screen with the mobile URL bar collapsed, so it never resizes when the bar moves. a sideways drag steps the records; pinch zoom stays the browser's. */
 .crate-stage {
   position: sticky;
   top: 0;
   height: 100lvh;
+  touch-action: pan-y pinch-zoom;
 }
 
 /* with the crate, the heading sticks above the crate's canvas and shrinks into the corner as `--dock` runs to 1. its box is its text, like `.crate-title`'s. */
@@ -324,17 +333,28 @@ a {
 }
 
 /* the docked heading's twin, which leaves with the stage. after the display heading rule, so its margin wins. */
-.crate-title {
+.crate-title,
+.crate-count {
   position: absolute;
   top: var(--edge);
-  left: var(--edge);
   margin: 0;
   scale: var(--dock-scale);
-  transform-origin: 0 0;
   z-index: 2;
 }
 
-#work:not([data-docked]) .crate-title {
+.crate-title {
+  left: var(--edge);
+  transform-origin: 0 0;
+}
+
+/* which record shows, opposite the docked title. */
+.crate-count {
+  right: var(--edge);
+  font-variant-numeric: tabular-nums;
+  transform-origin: 100% 0;
+}
+
+#work:not([data-docked]) :is(.crate-title, .crate-count) {
   visibility: hidden;
 }
 
@@ -392,6 +412,9 @@ a {
 /* every project's Visit link takes the same room, so the bar's height never depends on the project. */
 .hud-link .strong-link,
 .hud-visit-size {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   padding: 10px 16px;
   font-size: 16px;
   font-weight: 600;
@@ -424,6 +447,28 @@ a {
   .hud-link {
     order: -1;
     flex-basis: 100%;
+  }
+}
+
+/* a phone held sideways is too short for a bottom bar: the controls stand down the right and the crate frames left of them. coarse pointers keep short desktop windows on the bottom bar. */
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  .hud-bottom {
+    /* starts below the counter, which docks to a control's 44px height in the top right corner. */
+    top: calc(var(--edge) + 44px);
+    left: auto;
+    width: min(280px, 34vw);
+    /* a 568px phone's third is too narrow for the two buttons side by side; the bar widens leftward instead. */
+    min-width: max-content;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-content: center;
+  }
+
+  .hud-link {
+    grid-column: 1 / -1;
+    order: -1;
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 
@@ -484,7 +529,42 @@ a {
   display: block;
   width: 100%;
   height: auto;
+}
+
+.shot-figure {
   margin: 32px 0;
+}
+
+.shot-toggle {
+  margin-top: 12px;
+  padding: 10px 0;
+  text-decoration-line: underline;
+}
+
+/* a phone shows a picture too small to read: a tap opens it most of the screen tall, panned sideways in the page. */
+@media (max-width: 760px) {
+  .shot-figure .shot {
+    cursor: zoom-in;
+  }
+
+  .shot-frame[data-open] {
+    margin-inline: calc(-1 * var(--gutter));
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+  }
+
+  .shot-frame[data-open] .shot {
+    width: auto;
+    max-width: none;
+    height: var(--open-height);
+    cursor: zoom-out;
+  }
+}
+
+@media (min-width: 761px) {
+  .shot-toggle {
+    display: none;
+  }
 }
 
 .gallery {

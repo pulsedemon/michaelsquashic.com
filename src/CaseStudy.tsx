@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useRef, useState, type CSSProperties } from "react";
 import { intro, projects, srcSet, type Project, type Screenshot } from "./content";
+import { must } from "./must";
 import { ProjectLink } from "./ProjectLink";
 
 export function CaseStudy({ project }: { project: Project }) {
@@ -68,7 +69,7 @@ function Gallery({ images }: { images: NonNullable<Project["images"]> }) {
 
   return (
     <>
-      <Shot image={images[shown]} />
+      <Shot key={images[shown].src} image={images[shown]} />
       <div className="gallery">
         {images.map((image, i) => (
           <button
@@ -78,7 +79,7 @@ function Gallery({ images }: { images: NonNullable<Project["images"]> }) {
             aria-current={i === shown}
             onClick={() => setShown(i)}
           >
-            {/* the shot's sizes, so each thumbnail loads the file its shot shows. */}
+            {/* a closed shot's sizes, so each thumbnail loads the file its shot shows. */}
             <img
               src={image.src}
               srcSet={srcSet(image)}
@@ -94,16 +95,58 @@ function Gallery({ images }: { images: NonNullable<Project["images"]> }) {
   );
 }
 
+/** how tall a phone opens a picture, in `svh`. */
+const OPEN_SVH = 78;
+
+/** a phone's picture is too small to read, so a tap opens it most of the screen tall, panned sideways to where it was tapped. */
 function Shot({ image }: { image: Screenshot }) {
+  const frame = useRef<HTMLDivElement>(null);
+  const toggle = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+
+  function flip(at = 0.5) {
+    setOpen(!open);
+    if (open) return;
+    requestAnimationFrame(() => {
+      const f = must(frame.current);
+
+      f.scrollLeft = at * f.scrollWidth - f.clientWidth / 2;
+    });
+  }
+
   return (
-    <img
-      className="shot"
-      src={image.src}
-      srcSet={srcSet(image)}
-      sizes={shotSizes}
-      width={image.width}
-      height={image.height}
-      alt={image.alt}
-    />
+    <figure className="shot-figure">
+      <div
+        className="shot-frame"
+        ref={frame}
+        data-open={open || undefined}
+        style={{ "--open-height": `${OPEN_SVH}svh` } as CSSProperties}
+      >
+        <img
+          className="shot"
+          src={image.src}
+          srcSet={srcSet(image)}
+          // open, it is as wide as its height allows, on a phone only.
+          sizes={
+            open
+              ? `(max-width: 760px) ${Math.round((OPEN_SVH * image.width) / image.height)}svh, ${shotSizes}`
+              : shotSizes
+          }
+          width={image.width}
+          height={image.height}
+          alt={image.alt}
+          onClick={(e) => {
+            // the toggle shows only where pictures open, which the stylesheet decides.
+            if (getComputedStyle(must(toggle.current)).display === "none") return;
+            const r = e.currentTarget.getBoundingClientRect();
+
+            flip(open ? undefined : (e.clientX - r.left) / r.width);
+          }}
+        />
+      </div>
+      <button ref={toggle} className="shot-toggle strong-link" aria-expanded={open} onClick={() => flip()}>
+        {open ? "Shrink" : "Enlarge"}
+      </button>
+    </figure>
   );
 }

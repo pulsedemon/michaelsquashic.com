@@ -10,7 +10,7 @@ type Bar = { x: number; y: number; column: number; row: number; angle: number };
 
 const ripple = (bar: Bar, now: number) => Math.sin(now / 550 + bar.column * 0.5 + bar.row * 0.3) * (Math.PI / 3);
 
-/** bars filling the hero's empty side: they point at the pointer, and ripple once it rests or leaves the window. */
+/** bars beside the hero's text, or under it on a phone: they point at the pointer or a finger, and ripple once it rests or leaves the window. */
 export function HeroField() {
   const canvas = useRef<HTMLCanvasElement>(null);
 
@@ -90,10 +90,14 @@ export function HeroField() {
     const onMove = (e: PointerEvent) => {
       pointer = { x: e.clientX, y: e.clientY, at: performance.now() };
     };
+    // a finger dragged anywhere on the page counts as the pointer, while it scrolls too.
+    const onTouch = (e: TouchEvent) => {
+      pointer = { x: e.touches[0].clientX, y: e.touches[0].clientY, at: performance.now() };
+    };
     const onOut = (e: PointerEvent) => {
       if (!e.relatedTarget) pointer = null;
     };
-    // off screen, and while the narrow layout hides it, the field doesn't animate.
+    // off screen, the field doesn't animate.
     const visible = new IntersectionObserver(([entry]) => {
       cancelAnimationFrame(frame);
       last = 0;
@@ -103,6 +107,7 @@ export function HeroField() {
     visible.observe(c);
     addEventListener("pointermove", onMove);
     addEventListener("pointerout", onOut);
+    addEventListener("touchmove", onTouch, { passive: true });
 
     return () => {
       resize.disconnect();
@@ -110,6 +115,7 @@ export function HeroField() {
       cancelAnimationFrame(frame);
       removeEventListener("pointermove", onMove);
       removeEventListener("pointerout", onOut);
+      removeEventListener("touchmove", onTouch);
     };
   }, []);
 

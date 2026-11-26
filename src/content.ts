@@ -29,6 +29,8 @@ export type Screenshot = {
   height: number;
   /** the widths of its smaller copies, when not the `COPY_WIDTHS` narrower than the file: a lossless screenshot's 2048 px copy would outweigh the file itself. */
   copies?: number[];
+  /** the part a phone's record shows, where the whole picture is too small to read: left and top as shares of the file's size, and the share of its width. */
+  phoneCrop?: { x: number; y: number; width: number };
 };
 
 export const projects: Project[] = [
@@ -45,6 +47,7 @@ export const projects: Project[] = [
         width: 4320,
         height: 2610,
         copies: [1440, 2880],
+        phoneCrop: { x: 0, y: 0.06, width: 0.58 },
         alt: "Witch after a Codex turn, scrolled back to its edit: the agent's report on plan reviews by a Codex model and a Claude model, above a colored diff of tide.js and the command that checked it. A tools window lists the latest three tool calls, and the status line shows the model, context use and branch. The sidebar shows Codex and Claude usage.",
       },
       {
@@ -286,6 +289,7 @@ export const projects: Project[] = [
         src: "/work/cf-com/home.webp",
         width: 4320,
         height: 2610,
+        phoneCrop: { x: 0.22, y: 0, width: 0.56 },
         alt: 'The cf.com home page: a ChatFIN prompt reading "Ask me about Chatham", a row of news and insights, and the start of the calculators section.',
       },
       {

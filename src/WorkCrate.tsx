@@ -182,6 +182,12 @@ export function WorkCrate({ grid }: { grid: RefObject<HTMLDivElement | null> }) 
 
       setScene({ snapshot: captureCards(must(grid.current)), layout: measureLayout(crateLayout) });
     };
+    // a resize can pick a wider file from a picture's srcset after its own capture drew the old one. loads landing in one frame share a capture.
+    let recapture = 0;
+    const onPictureLoad = () => {
+      cancelAnimationFrame(recapture);
+      recapture = requestAnimationFrame(capture);
+    };
     const resample = () => void (latest = onSample());
     // resize runs before the frame's scroll events, which may already come from the new layout.
     const onResize = () => (beforeResize = latest);
@@ -232,8 +238,7 @@ export function WorkCrate({ grid }: { grid: RefObject<HTMLDivElement | null> }) 
       size = { width: s.clientWidth, height: s.clientHeight };
       capture();
       resized.observe(s);
-      // a resize can pick a wider file from a picture's srcset after the resize's own capture drew the old one.
-      for (const img of pictures) img.addEventListener("load", capture);
+      for (const img of pictures) img.addEventListener("load", onPictureLoad);
     };
 
     void load();
@@ -241,7 +246,8 @@ export function WorkCrate({ grid }: { grid: RefObject<HTMLDivElement | null> }) 
     return () => {
       cancelled = true;
       resized.disconnect();
-      for (const img of pictures) img.removeEventListener("load", capture);
+      for (const img of pictures) img.removeEventListener("load", onPictureLoad);
+      cancelAnimationFrame(recapture);
       removeEventListener("scroll", resample);
       removeEventListener("pageshow", resample);
       removeEventListener("resize", onResize);

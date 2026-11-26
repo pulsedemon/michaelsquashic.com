@@ -453,7 +453,8 @@ a {
 /* a phone held sideways is too short for a bottom bar: the controls stand down the right and the crate frames left of them. coarse pointers keep short desktop windows on the bottom bar. */
 @media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
   .hud-bottom {
-    top: 0;
+    /* starts below the counter, which docks to a control's 44px height in the top right corner. */
+    top: calc(var(--edge) + 44px);
     left: auto;
     width: min(280px, 34vw);
     /* a 568px phone's third is too narrow for the two buttons side by side; the bar widens leftward instead. */

@@ -136,6 +136,13 @@ for (const f of fixtures) {
       lowest <= f.canvas.height + layout.room.below + 0.5,
       `the scene reaches ${lowest - f.canvas.height}px below the stage, room ${layout.room.below}px`,
     );
+    // the canvas rises by `clear` while the stage scrolls in: any more runs the scene into the Work heading, any less leaves a gap.
+    const top = Math.max(0, highest);
+
+    assert.ok(
+      layout.room.clear <= top + 0.5 && layout.room.clear > top - 1.5,
+      `the scene starts ${top}px below the stage, clear ${layout.room.clear}px`,
+    );
   });
 }
 

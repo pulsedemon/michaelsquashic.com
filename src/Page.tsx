@@ -1,10 +1,20 @@
-import { Component, useRef, useState, type ReactNode } from "react";
+import { Component, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { intro, jobs, projects, srcSet, type Screenshot } from "./content";
 import { HeroField } from "./HeroField";
 import { ProjectLink } from "./ProjectLink";
 import { WorkCrate } from "./WorkCrate";
 
+const motionPreference = matchMedia("(prefers-reduced-motion: reduce)");
+const getReducedMotion = () => motionPreference.matches;
+
+function subscribeToMotionPreference(listener: () => void) {
+  motionPreference.addEventListener("change", listener);
+
+  return () => motionPreference.removeEventListener("change", listener);
+}
+
 export function Page({ webgl }: { webgl: boolean }) {
+  const reducedMotion = useSyncExternalStore(subscribeToMotionPreference, getReducedMotion);
   const grid = useRef<HTMLDivElement>(null);
   const [crate, setCrate] = useState(webgl);
 
@@ -14,14 +24,14 @@ export function Page({ webgl }: { webgl: boolean }) {
       <div className="hero">
         <h1>Hello.</h1>
         <p className="lede">{intro.body}</p>
-        <HeroField />
+        <HeroField reducedMotion={reducedMotion} />
       </div>
 
       <section id="work">
         <h2>Work.</h2>
         {crate && (
           <CrateBoundary onError={() => setCrate(false)}>
-            <WorkCrate grid={grid} />
+            <WorkCrate grid={grid} reducedMotion={reducedMotion} />
           </CrateBoundary>
         )}
         <div className="projects" ref={grid} data-crate-source={crate ? "" : undefined}>
